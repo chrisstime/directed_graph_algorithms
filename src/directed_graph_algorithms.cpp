@@ -51,6 +51,7 @@ std::pair<directed_graph<vertex>, std::list<vertex>> kahns_algorithm(const direc
   return std::make_pair(graph, topological_order);
 }
 
+
 /*
  * Computes whether the input is a Directed Acyclic Graph (DAG).
  * A digraph is a DAG if there is no vertex that has a cycle.
@@ -109,7 +110,8 @@ bool is_hamiltonian_dag(const directed_graph<vertex> & d) {
  */
 template <typename vertex>
 std::vector<std::vector<vertex>> components(const directed_graph<vertex> & d) {
-  
+  std::vector<std::vector<vertex>> weak_components;
+    
   return std::vector<std::vector<vertex>>();
 }
 
@@ -131,20 +133,6 @@ std::vector<std::vector<vertex>> strongly_connected_components(const directed_gr
   return std::vector<std::vector<vertex>>();
 }
 
-template <typename vertex>
-vertex minimum_dist(std::unordered_map<vertex, std::size_t> & stp_set, 
-                    std::unordered_map<vertex, bool> & visited){
-  
-  std::size_t min_val = INF;
-  vertex min_index;
-  
-  for(auto& it: stp_set)
-    if(visited[it.first] == false && it.second <= min_val)
-      min_index = it.first, min_val = it.second;
-
-  return min_index;
-}
-
 /*
  * Computes the shortest distance from u to every other vertex
  * in the graph d. The shortest distance is the smallest number
@@ -159,7 +147,6 @@ std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<
   int size = d.num_vertices();
   std::unordered_map<vertex, std::size_t> stp_set;
   std::unordered_map<vertex, bool> visited;
-  //std::priority_queue<vertex, std::vector<vertex>, std::greater<vertex>> pq;
 
   for(auto& it: d)
     stp_set[it] = INF, visited[it] = false;
@@ -167,15 +154,20 @@ std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<
   stp_set[u] = 0;
   
   for(auto i = 0; i < size-1 ; i++){
-  
-    auto v = minimum_dist(stp_set, visited);
-    
+    std::size_t min_val = INF;
+    vertex v;
+
+    for(auto& it: stp_set)
+      if(visited[it.first] == false && it.second <= min_val)
+        v = it.first, min_val = it.second;
+      
     visited[v] = true;
     
     for(auto& it: d){
       if(!visited[it] && d.adjacent(v, it) && stp_set[v] != INF && stp_set[v]+1 < stp_set[it]) 
         stp_set[it] = stp_set[v]+1;
-      else if(stp_set[it] == INF) stp_set[it] = d.num_vertices()+1;
+      else if(stp_set[it] == INF) 
+        stp_set[it] = d.num_vertices()+1;
     }
   }
   

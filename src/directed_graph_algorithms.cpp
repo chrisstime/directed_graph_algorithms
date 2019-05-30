@@ -177,7 +177,6 @@ std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<
         stp_set[it] = stp_set[v]+1;
       else if(stp_set[it] == INF) stp_set[it] = d.num_vertices()+1;
     }
-      
   }
   
   return stp_set;

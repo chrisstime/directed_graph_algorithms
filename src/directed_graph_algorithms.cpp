@@ -51,7 +51,6 @@ std::pair<directed_graph<vertex>, std::list<vertex>> kahns_algorithm(const direc
   return std::make_pair(graph, topological_order);
 }
 
-
 /*
  * Computes whether the input is a Directed Acyclic Graph (DAG).
  * A digraph is a DAG if there is no vertex that has a cycle.
@@ -139,12 +138,9 @@ vertex minimum_dist(std::unordered_map<vertex, std::size_t> & stp_set,
   std::size_t min_val = INF;
   vertex min_index;
   
-  for(auto& it: stp_set){
-    if(visited[it.first] == false && it.second <= min_val){
-      min_index = it.first;
-      min_val = it.second;
-    }
-  }
+  for(auto& it: stp_set)
+    if(visited[it.first] == false && it.second <= min_val)
+      min_index = it.first, min_val = it.second;
 
   return min_index;
 }
@@ -159,19 +155,19 @@ vertex minimum_dist(std::unordered_map<vertex, std::size_t> & stp_set,
 template <typename vertex>
 std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<vertex> & d, const vertex & u) {
   // Dijkstra's algorithm
+  
   int size = d.num_vertices();
   std::unordered_map<vertex, std::size_t> stp_set;
   std::unordered_map<vertex, bool> visited;
   //std::priority_queue<vertex, std::vector<vertex>, std::greater<vertex>> pq;
 
-  for(auto& it: d){
-    stp_set[it] = INF;
-    visited[it] = false;
-  }
-  //pq.push(u);
+  for(auto& it: d)
+    stp_set[it] = INF, visited[it] = false;
+
   stp_set[u] = 0;
   
   for(auto i = 0; i < size-1 ; i++){
+  
     auto v = minimum_dist(stp_set, visited);
     
     visited[v] = true;
@@ -179,11 +175,10 @@ std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<
     for(auto& it: d){
       if(!visited[it] && d.adjacent(v, it) && stp_set[v] != INF && stp_set[v]+1 < stp_set[it]) 
         stp_set[it] = stp_set[v]+1;
+      else if(stp_set[it] == INF) stp_set[it] = d.num_vertices()+1;
     }
+      
   }
-  
-  for(auto& it: d)
-    if(stp_set[it] == INF) stp_set[it] = d.num_vertices()+1;
   
   return stp_set;
 }

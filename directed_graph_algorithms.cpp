@@ -1,5 +1,3 @@
-#define INFINITE_DIST 9000000
-
 /*
  * Notice that the list of included headers has
  * expanded a little. As before, you are not allowed
@@ -27,6 +25,7 @@
 #include <stdexcept>
 
 #include "directed_graph.hpp"
+# define INF 9000000
 
 template <typename vertex>
 std::pair<directed_graph<vertex>, std::list<vertex>> kahns_algorithm(const directed_graph<vertex> & d){
@@ -65,7 +64,7 @@ bool is_dag(const directed_graph<vertex> & d) {
   if(d.num_vertices()) {
     directed_graph<vertex> g = kahns_algorithm(d).first;
 
-    for(auto i : g) 
+    for(auto& i : g) 
       if(g.in_degree(i)) return false;
   }
   
@@ -94,13 +93,25 @@ template <typename vertex>
 bool is_hamiltonian_dag(const directed_graph<vertex> & d) {  
   std::list<vertex> ts(topological_sort(d));
   
-  for(auto i = ts.begin() ; i != ts.end(); ++i){
+  for(auto i = ts.begin() ; i != ts.end(); i++){
     auto nx = std::next(i, 1);
     
     if(nx != ts.end() && !d.adjacent(*i, *nx)) return false;
   }
   
   return true;
+}
+
+template <typename vertex>
+void dft(const directed_graph<vertex> & d, const vertex& u, 
+         std::unordered_map<vertex, bool>& visited, std::vector<vertex>& single_component){
+  
+  visited[u] = true;
+  single_component.push_back(u);
+  
+  for(auto i = d.nbegin(u); i != d.nend(u); i++){
+    if(!visited[*i]) dft(d, *i, visited, single_component);
+  }
 }
 
 /*
@@ -111,13 +122,30 @@ bool is_hamiltonian_dag(const directed_graph<vertex> & d) {
  */
 template <typename vertex>
 std::vector<std::vector<vertex>> components(const directed_graph<vertex> & d) {
+  std::vector<std::vector<vertex>> weak_components;
+  std::vector<vertex> single_component;
+  std::unordered_map<vertex, bool> visited;
+
+  for(auto& i: d) visited.insert(std::make_pair(i, false));
+
+  for(auto& i: d){
+    if(visited[i] == false){
+      dft(d, i, visited, single_component);
+      weak_components.push_back(single_component);
+      single_component.clear();
+    }
+  }
   
-  return std::vector<std::vector<vertex>>();
+  return weak_components;
 }
 
-
 template <typename vertex>
-void tarjans_algorithm() {
+void tarjans_algorithm(std::vector<std::vector<vertex>> strong_components, int size){
+  std::stack<std::pair<vertex, bool>> s;
+  
+  int discovery_time[size], low[size], counter;
+  vertex current;
+    
   
 }
 
@@ -130,27 +158,12 @@ void tarjans_algorithm() {
 
 template <typename vertex>
 std::vector<std::vector<vertex>> strongly_connected_components(const directed_graph<vertex> & d) {
-  std::stack<vertex> s;
-  int index = 0;
+  std::vector<std::vector<vertex>> strong_components;
+  int size = d.num_vertices();
   
-  for(auto i : d){
-  }
+  for(auto i = 0; i < size; ++i){}
   
-  return std::vector<std::vector<vertex>>();
-}
-
-template <typename vertex>
-vertex getClosestVertex(std::unordered_map<vertex, std::size_t> & shortest_path, bool sp_vertices[]){
-  int infinite_dist = INFINITE_DIST;
-  vertex min = infinite_dist, min_index;
-  
-  for(auto i : shortest_path){
-    if(sp_vertices[i] == false && shortest_path[i] <= min)
-      min = shortest_path[i];
-      min_index = i;
-  }
-  
-  return min_index;
+  return strong_components;
 }
 
 /*
@@ -162,35 +175,35 @@ vertex getClosestVertex(std::unordered_map<vertex, std::size_t> & shortest_path,
  */
 template <typename vertex>
 std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<vertex> & d, const vertex & u) {
-  
   // Dijkstra's algorithm
-  int infinite_dist = INFINITE_DIST;
-  std::unordered_map<vertex, int> shortest_path(d.num_vertices(), INFINITE_DIST);
-  bool sp_vertices[d.num_vertices()];
   
-  shortest_path = 0;
+  int size = d.num_vertices();
+  std::unordered_map<vertex, std::size_t> stp_set;
+  std::unordered_map<vertex, bool> visited;
+
+  for(auto& it: d)
+    stp_set[it] = INF, visited[it] = false;
+
+  stp_set[u] = 0;
   
-  //for(auto i = d.begin() ; i != d.end(); ++i){
-  for(auto i : d){
-    vertex v = getClosestVertex(shortest_path, sp_vertices);
+  for(auto i = 0; i < size-1 ; i++){
+    std::size_t min_val = INF;
+    vertex v;
+
+    for(auto& it: stp_set)
+      if(visited[it.first] == false && it.second <= min_val)
+        v = it.first, min_val = it.second;
+      
+    visited[v] = true;
     
-    sp_vertices[v] = true;
+    for(auto& it: d){
     
-    for(auto j : d)
-      if(!sp_vertices[j] && 
-        adjacent(v,j) && 
-        shortest_path[u] != infinite_dist &&
-        shortest_path[u].size()+1 < shortest_path[j])
-        
-         shortest_path[j] = shortest_path[u] + 1;
-    
+      if(!visited[it] && d.adjacent(v, it) && stp_set[v] != INF && stp_set[v]+1 < stp_set[it]) 
+        stp_set[it] = stp_set[v]+1;
+      else if(stp_set[it] == INF) 
+        stp_set[it] = size+1;
+    }
   }
   
-  std::unordered_map<vertex, std::size_t> foo;
-  
-  for(auto k : shortest_path)
-    foo.insert(std::make_pair(k, 1));
-  
-  
-  return foo;
+  return stp_set;
 }

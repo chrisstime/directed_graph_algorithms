@@ -123,7 +123,6 @@ void dft(const directed_graph<vertex> & d, const vertex& u,
 template <typename vertex>
 std::vector<std::vector<vertex>> components(const directed_graph<vertex> & d) {
   std::vector<std::vector<vertex>> weak_components;
-<<<<<<< HEAD:directed_graph_algorithms.cpp
   std::vector<vertex> single_component;
   std::unordered_map<vertex, bool> visited;
 
@@ -146,16 +145,8 @@ void tarjans_algorithm(std::vector<std::vector<vertex>> strong_components, int s
   
   int discovery_time[size], low[size], counter;
   vertex current;
-    
-  
 }
 
-=======
-    
-  return std::vector<std::vector<vertex>>();
-}
-
->>>>>>> 28b9c7eb421a60295ec9b3e88ebbf50cf51c3249:src/directed_graph_algorithms.cpp
 /*
  * Computes the strongly connected components of the graph.
  * A strongly connected component is a subset of the vertices
@@ -170,11 +161,7 @@ std::vector<std::vector<vertex>> strongly_connected_components(const directed_gr
   
   for(auto i = 0; i < size; ++i){}
   
-<<<<<<< HEAD:directed_graph_algorithms.cpp
   return strong_components;
-=======
-  return std::vector<std::vector<vertex>>();
->>>>>>> 28b9c7eb421a60295ec9b3e88ebbf50cf51c3249:src/directed_graph_algorithms.cpp
 }
 
 /*
@@ -206,7 +193,6 @@ std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<
         v = it.first, min_val = it.second;
       
     visited[v] = true;
-<<<<<<< HEAD:directed_graph_algorithms.cpp
     
     for(auto& it: d){
     
@@ -214,14 +200,6 @@ std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<
         stp_set[it] = stp_set[v]+1;
       else if(stp_set[it] == INF) 
         stp_set[it] = size+1;
-=======
-    
-    for(auto& it: d){
-      if(!visited[it] && d.adjacent(v, it) && stp_set[v] != INF && stp_set[v]+1 < stp_set[it]) 
-        stp_set[it] = stp_set[v]+1;
-      else if(stp_set[it] == INF) 
-        stp_set[it] = d.num_vertices()+1;
->>>>>>> 28b9c7eb421a60295ec9b3e88ebbf50cf51c3249:src/directed_graph_algorithms.cpp
     }
   }
   

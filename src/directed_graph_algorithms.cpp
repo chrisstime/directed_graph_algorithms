@@ -122,15 +122,20 @@ void dft(const directed_graph<vertex> & d, const vertex& u,
  */
 template <typename vertex>
 std::vector<std::vector<vertex>> components(const directed_graph<vertex> & d) {
+  directed_graph<vertex> g(d);
   std::vector<std::vector<vertex>> weak_components;
   std::vector<vertex> single_component;
   std::unordered_map<vertex, bool> visited;
 
-  for(auto& i: d) visited.insert(std::make_pair(i, false));
+  for(auto& i: g){
+    visited.insert(std::make_pair(i, false));
+    for(auto v = g.nbegin(i); v != g.nend(i); v++)
+      g.add_edge(*v, i);
+  }
 
-  for(auto& i: d){
+  for(auto& i: g){
     if(visited[i] == false){
-      dft(d, i, visited, single_component);
+      dft(g, i, visited, single_component);
       weak_components.push_back(single_component);
       single_component.clear();
     }
@@ -151,24 +156,21 @@ void tarjans(const vertex& u, int& index, std::unordered_map<vertex, int>& v_ind
   s.push(u);
   on_stack[u] = true;
   
-  for(auto i = d.begin(); i != d.end(); i++){
-    if(d.adjacent(u, *i)){
-     if(v_index[*i] == INF){
-       tarjans(*i, index, v_index, v_low, s, on_stack, d, strong_components);
-       v_low[u] = std::min(v_low[u], v_low[*i]);
-       
-      } else if(on_stack[*i]){
-        v_low[u] = std::min(v_low[u], v_index[*i]);
-      } 
-    }
+  for(auto i = d.nbegin(u); i != d.nend(u); i++){
+    if(v_index[*i] == INF){
+      tarjans(*i, index, v_index, v_low, s, on_stack, d, strong_components);
+      v_low[u] = std::min(v_low[u], v_low[*i]);
+
+    } else if(on_stack[*i]){
+      v_low[u] = std::min(v_low[u], v_index[*i]);
+    } 
   }
   
   if(v_low[u] == v_index[u]){
     std::vector<vertex> new_component;
     vertex w;
     do{
-      w = s.top();
-      s.pop();
+      w = s.top(), s.pop();
       on_stack[w] = false;
       new_component.push_back(w);
     } while (w != u);

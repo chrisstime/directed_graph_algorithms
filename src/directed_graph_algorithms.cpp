@@ -26,9 +26,14 @@
 
 #include "directed_graph.hpp"
 
+// used a large number to define a value
+// that can be considered null or infinity in the graph
 #define INF 9000000
-#define un_map_int std::unordered_map<vertex, int>
-#define un_map_bool std::unordered_map<vertex, bool>
+
+// pre-define some variables to keep lines and params short
+#define unordered_map_int std::unordered_map<vertex, int>
+#define unordered_map_bool std::unordered_map<vertex, bool>
+#define unordered_map_size_t std::unordered_map<vertex, std::size_t>
 
 template <typename vertex>
 std::pair<directed_graph<vertex>, std::list<vertex>> kahns(const directed_graph<vertex> & d){
@@ -108,7 +113,7 @@ bool is_hamiltonian_dag(const directed_graph<vertex> & d) {
 
 template <typename vertex>
 void dft(const directed_graph<vertex> & d, const vertex& u, 
-         std::unordered_map<vertex, bool>& visited, std::vector<vertex>& s_comp){
+         unordered_map_bool& visited, std::vector<vertex>& s_comp){
   
   visited[u] = true;
   s_comp.push_back(u);
@@ -129,7 +134,7 @@ std::vector<std::vector<vertex>> components(const directed_graph<vertex> & d) {
   directed_graph<vertex> g(d);
   std::vector<std::vector<vertex>> weak_comp;
   std::vector<vertex> s_comp;
-  std::unordered_map<vertex, bool> visited;
+  unordered_map_bool visited;
 
   for(auto& i: g){
     visited.insert(std::make_pair(i, false));
@@ -148,9 +153,9 @@ std::vector<std::vector<vertex>> components(const directed_graph<vertex> & d) {
 }
 
 template <typename vertex>
-void tarjans(const vertex& u, int& g_index, un_map_int& index, 
-             un_map_int& low, std::stack<vertex>& s, 
-             un_map_bool& on_stack, const directed_graph<vertex> & d,
+void tarjans(const vertex& u, int& g_index, unordered_map_int& index, 
+             unordered_map_int& low, std::stack<vertex>& s, 
+             unordered_map_bool& on_stack, const directed_graph<vertex> & d,
              std::vector<std::vector<vertex>>& strong_comp){
   
   index[u] = g_index;
@@ -189,8 +194,8 @@ void tarjans(const vertex& u, int& g_index, un_map_int& index,
 template <typename vertex>
 std::vector<std::vector<vertex>> strongly_connected_components(const directed_graph<vertex> & d) {
   std::vector<std::vector<vertex>> strong_comp;
-  un_map_int low, index;
-  un_map_bool on_stack;
+  unordered_map_int low, index;
+  unordered_map_bool on_stack;
   std::stack<vertex> s;
   int g_index = 0;
   
@@ -215,12 +220,12 @@ std::vector<std::vector<vertex>> strongly_connected_components(const directed_gr
  * be the number of vertices in d plus 1.
  */
 template <typename vertex>
-std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<vertex> & d, const vertex & u) {
+unordered_map_size_t shortest_distances(const directed_graph<vertex> & d, const vertex & u) {
   // Dijkstra's algorithm
   
   int size = d.num_vertices();
-  std::unordered_map<vertex, std::size_t> sd;
-  un_map_bool visited;
+  unordered_map_size_t sd;
+  unordered_map_bool visited;
 
   for(auto& it: d)
     sd[it] = INF, visited[it] = false;

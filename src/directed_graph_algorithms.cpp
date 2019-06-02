@@ -25,30 +25,33 @@
 #include <stdexcept>
 
 #include "directed_graph.hpp"
-# define INF 9000000
+
+#define INF 9000000
+#define un_map_int std::unordered_map<vertex, int>
+#define un_map_bool std::unordered_map<vertex, bool>
 
 template <typename vertex>
 std::pair<directed_graph<vertex>, std::list<vertex>> kahns(const directed_graph<vertex> & d){
-  directed_graph<vertex> graph(d);
-  std::vector<vertex> zero_indegrees;
-  std::list<vertex> topological_order;
+  directed_graph<vertex> g(d);
+  std::queue<vertex> q;
+  std::list<vertex> t_order;
 
-  for(auto i : graph)
-    if(d.in_degree(i) == 0) zero_indegrees.push_back(i);
+  for(auto i : d)
+    if(d.in_degree(i) == 0) q.push(i);
 
-  while(!zero_indegrees.empty()){
-    vertex v = zero_indegrees.back();
-    zero_indegrees.pop_back();
-    topological_order.push_back(v);
+  while(!q.empty()){
+    vertex v = q.front();
+    q.pop();
+    t_order.push_back(v);
 
     for(auto u = d.nbegin(v); u != d.nend(v); ++u){
-      graph.remove_edge(v, *u);
+      g.remove_edge(v, *u);
       
-      if(graph.in_degree(*u) == 0) zero_indegrees.push_back(*u);
+      if(g.in_degree(*u) == 0) q.push(*u);
     }
   }
   
-  return std::make_pair(graph, topological_order);
+  return std::make_pair(g, t_order);
 }
 
 
@@ -65,7 +68,8 @@ bool is_dag(const directed_graph<vertex> & d) {
     directed_graph<vertex> g = kahns(d).first;
 
     for(auto& i : g) 
-      if(g.in_degree(i)) return false;
+      if(g.in_degree(i)) 
+        return false;
   }
   
   return true;
@@ -104,14 +108,14 @@ bool is_hamiltonian_dag(const directed_graph<vertex> & d) {
 
 template <typename vertex>
 void dft(const directed_graph<vertex> & d, const vertex& u, 
-         std::unordered_map<vertex, bool>& visited, std::vector<vertex>& single_component){
+         std::unordered_map<vertex, bool>& visited, std::vector<vertex>& s_comp){
   
   visited[u] = true;
-  single_component.push_back(u);
+  s_comp.push_back(u);
   
   for(auto i = d.nbegin(u); i != d.nend(u); i++)
     if(!visited[*i]) 
-      dft(d, *i, visited, single_component);
+      dft(d, *i, visited, s_comp);
 }
 
 /*
@@ -123,8 +127,8 @@ void dft(const directed_graph<vertex> & d, const vertex& u,
 template <typename vertex>
 std::vector<std::vector<vertex>> components(const directed_graph<vertex> & d) {
   directed_graph<vertex> g(d);
-  std::vector<std::vector<vertex>> weak_components;
-  std::vector<vertex> single_component;
+  std::vector<std::vector<vertex>> weak_comp;
+  std::vector<vertex> s_comp;
   std::unordered_map<vertex, bool> visited;
 
   for(auto& i: g){
@@ -135,46 +139,44 @@ std::vector<std::vector<vertex>> components(const directed_graph<vertex> & d) {
 
   for(auto& i: g){
     if(visited[i] == false){
-      dft(g, i, visited, single_component);
-      weak_components.push_back(single_component);
-      single_component.clear();
+      dft(g, i, visited, s_comp);
+      weak_comp.push_back(s_comp), s_comp.clear();
     }
   }
   
-  return weak_components;
+  return weak_comp;
 }
 
 template <typename vertex>
-void tarjans(const vertex& u, int& index, std::unordered_map<vertex, int>& v_index, 
-             std::unordered_map<vertex, int>& v_low, std::stack<vertex>& s, 
-             std::unordered_map<vertex, bool>& on_stack, const directed_graph<vertex> & d,
-             std::vector<std::vector<vertex>>& strong_components){
+void tarjans(const vertex& u, int& g_index, un_map_int& index, 
+             un_map_int& low, std::stack<vertex>& s, 
+             un_map_bool& on_stack, const directed_graph<vertex> & d,
+             std::vector<std::vector<vertex>>& strong_comp){
   
-  v_index[u] = index;
-  v_low[u] = index;
-  ++index;
+  index[u] = g_index;
+  low[u] = g_index;
+  ++g_index;
   s.push(u);
   on_stack[u] = true;
   
   for(auto i = d.nbegin(u); i != d.nend(u); i++){
-    if(v_index[*i] == INF){
-      tarjans(*i, index, v_index, v_low, s, on_stack, d, strong_components);
-      v_low[u] = std::min(v_low[u], v_low[*i]);
-
+    if(index[*i] == INF){
+      tarjans(*i, g_index, index, low, s, on_stack, d, strong_comp);
+      low[u] = std::min(low[u], low[*i]);
     } else if(on_stack[*i]){
-      v_low[u] = std::min(v_low[u], v_index[*i]);
+      low[u] = std::min(low[u], index[*i]);
     } 
   }
   
-  if(v_low[u] == v_index[u]){
-    std::vector<vertex> new_component;
+  if(low[u] == index[u]){
+    std::vector<vertex> c;
     vertex w;
     do{
       w = s.top(), s.pop();
       on_stack[w] = false;
-      new_component.push_back(w);
+      c.push_back(w);
     } while (w != u);
-    strong_components.push_back(new_component);  
+    strong_comp.push_back(c);  
   }
 }
 
@@ -184,27 +186,25 @@ void tarjans(const vertex& u, int& index, std::unordered_map<vertex, int>& v_ind
  * such that for every pair u, v of vertices in the subset,
  * v is reachable from u and u is reachable from v.
  */
-
 template <typename vertex>
 std::vector<std::vector<vertex>> strongly_connected_components(const directed_graph<vertex> & d) {
-  std::vector<std::vector<vertex>> strong_components;
-  std::unordered_map<vertex, int> v_low;
-  std::unordered_map<vertex, int> v_index;
-  std::unordered_map<vertex, bool> on_stack;
+  std::vector<std::vector<vertex>> strong_comp;
+  un_map_int low, index;
+  un_map_bool on_stack;
   std::stack<vertex> s;
-  int index = 0;
+  int g_index = 0;
   
   for(auto& i: d){
-    v_low.insert(std::make_pair(i, INF));
-    v_index.insert(std::make_pair(i, INF));
+    low.insert(std::make_pair(i, INF));
+    index.insert(std::make_pair(i, INF));
     on_stack.insert(std::make_pair(i, false));
   }
   
   for(auto& v: d)
-    if(v_index[v] == INF)
-      tarjans(v, index, v_index, v_low, s, on_stack, d, strong_components);
+    if(index[v] == INF)
+      tarjans(v, g_index, index, low, s, on_stack, d, strong_comp);
   
-  return strong_components;
+  return strong_comp;
 }
 
 /*
@@ -219,31 +219,31 @@ std::unordered_map<vertex, std::size_t> shortest_distances(const directed_graph<
   // Dijkstra's algorithm
   
   int size = d.num_vertices();
-  std::unordered_map<vertex, std::size_t> stp_set;
-  std::unordered_map<vertex, bool> visited;
+  std::unordered_map<vertex, std::size_t> sd;
+  un_map_bool visited;
 
   for(auto& it: d)
-    stp_set[it] = INF, visited[it] = false;
+    sd[it] = INF, visited[it] = false;
 
-  stp_set[u] = 0;
+  sd[u] = 0;
   
   for(auto i = 0; i < size-1 ; i++){
     std::size_t min_val = INF;
     vertex v;
 
-    for(auto& it: stp_set)
+    for(auto& it: sd)
       if(visited[it.first] == false && it.second <= min_val)
         v = it.first, min_val = it.second;
       
     visited[v] = true;
     
     for(auto& it: d){
-      if(!visited[it] && d.adjacent(v, it) && stp_set[v] != INF && stp_set[v]+1 < stp_set[it]) 
-        stp_set[it] = stp_set[v]+1;
-      else if(stp_set[it] == INF) 
-        stp_set[it] = size+1;
+      if(!visited[it] && d.adjacent(v, it) && sd[v] != INF && sd[v]+1 < sd[it]) 
+        sd[it] = sd[v]+1;
+      else if(sd[it] == INF) 
+        sd[it] = size+1;
     }
   }
   
-  return stp_set;
+  return sd;
 }

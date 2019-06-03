@@ -88,9 +88,7 @@ bool is_dag(const directed_graph<vertex> & d) {
     directed_graph<vertex> g = kahns(d).first;
 
     // if the resulting graph has any edges, then it's not acyclic
-    for(auto& i : g)
-      if(g.in_degree(i)) 
-        return false;
+    if(g.num_edges() == 0) return false;
   }
   
   return true;
